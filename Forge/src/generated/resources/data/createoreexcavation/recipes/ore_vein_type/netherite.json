@@ -10,7 +10,7 @@
   "placement": {
     "salt": 408736440,
     "separation": 128,
-    "spacing": 512
+    "spacing": 256
   },
   "priority": 0
 }

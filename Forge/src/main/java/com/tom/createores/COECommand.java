@@ -12,7 +12,6 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.synchronization.SuggestionProviders;
-import net.minecraft.commands.arguments.StringArgumentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -53,18 +52,13 @@ public class COECommand {
 					BlockPos blockpos = BlockPos.containing(c.getSource().getPosition());
 					return locateNearestVein(c.getSource(), blockpos, null, 16);
 				}).
-				then(Commands.argument("vein", StringArgumentType.word()).suggests(VEIN_NAMES).
+				then(Commands.argument("recipe", ResourceLocationArgument.id()).suggests(ALL_RECIPES).
 						executes(c -> {
-							String veinName = StringArgumentType.getString(c, "vein");
-							ResourceLocation veinId = ResourceLocation.tryBuild(CreateOreExcavation.MODID, veinName);
-							if (veinId != null) {
-								RecipeHolder<?> rl = c.getSource().getServer().getRecipeManager().byKey(veinId).orElse(null);
-								if(rl != null && rl.value() instanceof VeinRecipe) {
-									BlockPos blockpos = BlockPos.containing(c.getSource().getPosition());
-									return locateNearestVein(c.getSource(), blockpos, rl.id(), 16);
-								}
+							RecipeHolder<?> rl = ResourceLocationArgument.getRecipe(c, "recipe");
+							if(rl != null && rl.value() instanceof VeinRecipe) {
+								BlockPos blockpos = BlockPos.containing(c.getSource().getPosition());
+								return locateNearestVein(c.getSource(), blockpos, rl.id(), 16);
 							}
-							c.getSource().sendFailure(Component.literal("矿脉不存在: " + veinName));
 							return 0;
 						})
 				)
@@ -162,8 +156,9 @@ public class COECommand {
 		VeinRecipe veinRecipe = nearest.getSecond().value();
 		
 		// 计算距离
-		double distance = playerPos.distanceSqr(veinPos);
-		distance = Math.sqrt(distance);
+		long dx = veinPos.getX() - playerPos.getX();
+		long dz = veinPos.getZ() - playerPos.getZ();
+		double distance = Math.sqrt(dx * dx + dz * dz) * 16; // 转换为方块距离
 		
 		source.sendSuccess(() -> Component.literal("§a✓ 找到矿脉:§r"), false);
 		source.sendSuccess(() -> Component.literal("  §e类型: §b" + veinRecipe.getName().getString()), false);
@@ -206,22 +201,5 @@ public class COECommand {
 		return SharedSuggestionProvider.suggestResource(rl, builder);
 	});
 
-	public static final SuggestionProvider<CommandSourceStack> VEIN_NAMES = SuggestionProviders.register(ResourceLocation.tryBuild(CreateOreExcavation.MODID, "vein_names"), (ctx, builder) -> {
-		Stream<String> names;
-		RecipeManager rm;
-		if(ctx.getSource() instanceof ClientCommandSourceStack || ctx.getSource() instanceof ClientSuggestionProvider) {
-			rm = Minecraft.getInstance().getConnection().getRecipeManager();
-		} else if(ctx.getSource() instanceof CommandSourceStack css) {
-			rm = css.getServer().getRecipeManager();
-		} else {
-			rm = null;
-		}
-		if(rm != null) {
-			// 只取矿脉名称的后半部分（去掉 createoreexcavation: 前缀）
-			names = rm.getAllRecipesFor(CreateOreExcavation.VEIN_RECIPES.getRecipeType()).stream()
-				.map(rh -> rh.id().getPath());
-		} else names = Stream.empty();
 
-		return SharedSuggestionProvider.suggest(names, builder);
-	});
 }
