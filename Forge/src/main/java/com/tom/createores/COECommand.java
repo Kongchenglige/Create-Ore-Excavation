@@ -54,10 +54,10 @@ public class COECommand {
 				}).
 				then(Commands.argument("recipe", ResourceLocationArgument.id()).suggests(ALL_RECIPES).
 						executes(c -> {
-							RecipeHolder<?> rl = ResourceLocationArgument.getRecipe(c, "recipe");
-							if(rl != null && rl.value() instanceof VeinRecipe) {
+							Recipe<?> rl = ResourceLocationArgument.getRecipe(c, "recipe");
+							if(rl != null && rl instanceof VeinRecipe) {
 								BlockPos blockpos = BlockPos.containing(c.getSource().getPosition());
-								return locateNearestVein(c.getSource(), blockpos, rl.id(), 16);
+								return locateNearestVein(c.getSource(), blockpos, rl.getId(), 16);
 							}
 							return 0;
 						})
@@ -143,9 +143,9 @@ public class COECommand {
 		}
 		source.sendSuccess(() -> Component.literal("§7---"), false);
 
-		com.mojang.datafixers.util.Pair<BlockPos, RecipeHolder<VeinRecipe>> nearest = OreVeinGenerator.getPicker(level)
+		com.mojang.datafixers.util.Pair<BlockPos, VeinRecipe> nearest = OreVeinGenerator.getPicker(level)
 			.locate(playerPos, level, searchRadius, 
-				recipe -> targetVein == null || recipe.id().equals(targetVein));
+				recipe -> targetVein == null || recipe.getId().equals(targetVein));
 
 		if (nearest == null) {
 			source.sendSuccess(() -> Component.literal("§c未找到矿脉"), false);
@@ -153,7 +153,7 @@ public class COECommand {
 		}
 
 		BlockPos veinPos = nearest.getFirst();
-		VeinRecipe veinRecipe = nearest.getSecond().value();
+		VeinRecipe veinRecipe = nearest.getSecond();
 		
 		// 计算距离
 		long dx = veinPos.getX() - playerPos.getX();
