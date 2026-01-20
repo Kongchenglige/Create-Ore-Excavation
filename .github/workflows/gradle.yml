@@ -24,12 +24,24 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
+      with:
+        cache-read-only: false
+
+    - name: Cache ForgeGradle
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/forge_gradle
+          ~/.gradle/caches/minecraft
+        key: ${{ runner.os }}-forgegradle-${{ hashFiles('Forge/build.gradle', 'Forge/gradle.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-forgegradle-
 
     - name: Make gradlew executable
       run: chmod +x Forge/gradlew
 
     - name: Build Forge with Gradle Wrapper
-      run: cd Forge && ./gradlew build
+      run: cd Forge && ./gradlew build --no-daemon
 
     - name: Upload Forge Build Artifact
       uses: actions/upload-artifact@v4
