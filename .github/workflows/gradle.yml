@@ -41,7 +41,7 @@ jobs:
       run: chmod +x Forge/gradlew
 
     - name: Build Forge with Gradle Wrapper
-      run: cd Forge && ./gradlew build --no-daemon
+      run: cd Forge && ./gradlew jar --no-daemon
 
     - name: Upload Forge Build Artifact
       uses: actions/upload-artifact@v4
